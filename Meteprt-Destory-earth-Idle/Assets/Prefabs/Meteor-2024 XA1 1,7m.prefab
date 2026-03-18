@@ -143,8 +143,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSpeed: 5
   acceleration: 0.6
-  maxHealth: 100
+  maxHealth: 90
   coinReward: 100
+  diamondReward: 0
   massFactor: 10
   destructionParticles: {fileID: 8177209327860406344, guid: 31368fc866b9ceb4f82fba0c99c47535, type: 3}
   offScreenLifetime: 15
@@ -189,6 +190,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedPenalty: 4.2
   impactForce: 2
+  breakGrabOnHit: 1
+  objectMass: 2
 --- !u!114 &5589282294982048704
 MonoBehaviour:
   m_ObjectHideFlags: 0
