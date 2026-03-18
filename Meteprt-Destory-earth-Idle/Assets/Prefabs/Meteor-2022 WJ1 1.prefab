@@ -144,9 +144,10 @@ MonoBehaviour:
   maxSpeed: 4
   acceleration: 0.35
   maxHealth: 60
-  coinReward: 10
+  coinReward: 70
   massFactor: 5
   destructionParticles: {fileID: 8177209327860406344, guid: 31368fc866b9ceb4f82fba0c99c47535, type: 3}
+  offScreenLifetime: 15
 --- !u!50 &960988317815577957
 Rigidbody2D:
   serializedVersion: 5

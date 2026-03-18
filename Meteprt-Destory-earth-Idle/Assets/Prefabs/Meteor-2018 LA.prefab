@@ -16,8 +16,8 @@ GameObject:
   - component: {fileID: 4744241604554192181}
   - component: {fileID: 5589282294982048704}
   m_Layer: 0
-  m_Name: Meteor-2024 XA1
-  m_TagString: SmallDebris
+  m_Name: Meteor-2018 LA
+  m_TagString: RareMeteor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -3, y: -0.9, z: 0}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3015158800073823989}
@@ -83,7 +83,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: -2413806693520163455, guid: ebe73ca9363db456bacf42c025bb4847, type: 3}
-  m_Color: {r: 0.4811321, g: 0.4811321, b: 0.4811321, a: 1}
+  m_Color: {r: 0, g: 1, b: 0.8708036, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -141,11 +141,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3db454a2222320a44a4d84f9cefe3294, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSpeed: 4
-  acceleration: 0.6
-  maxHealth: 40
-  coinReward: 55
-  massFactor: 3
+  maxSpeed: 6.5
+  acceleration: 0.65
+  maxHealth: 130
+  coinReward: 2100
+  diamondReward: 1
+  massFactor: 50
   destructionParticles: {fileID: 8177209327860406344, guid: 31368fc866b9ceb4f82fba0c99c47535, type: 3}
   offScreenLifetime: 15
 --- !u!50 &960988317815577957
@@ -187,8 +188,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c92dab2ff79e28447ade46b0217f2cd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speedPenalty: 1.3
-  impactForce: 1.2
+  speedPenalty: 5.6
+  impactForce: 4
+  breakGrabOnHit: 1
+  objectMass: 2
 --- !u!114 &5589282294982048704
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,8 +204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 818874ff70d8d4e42ab36935ea48afaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  asteroidName: 2024 XA1
-  asteroidSize: 'Size: 0,7m'
+  asteroidName: 2018 LA
+  asteroidSize: 'Size: 5m'
   infoCanvas: {fileID: 4259401247019665878}
   nameText: {fileID: 2918430776825581050}
   sizeText: {fileID: 8324078274347674776}

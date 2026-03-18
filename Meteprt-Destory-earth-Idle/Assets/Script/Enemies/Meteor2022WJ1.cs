@@ -11,7 +11,8 @@ public class Meteor2022WJ1 : MonoBehaviour
     [Header("Stats")]
     public float maxHealth = 40f;
     private float currentHealth;
-    public double coinReward = 10;
+    public double coinReward = 10;       // Udbetales ved eksplosion
+    public int diamondReward = 0; // Sæt denne til 1, 2 eller 5 i Unity for "Rare" meteorer
     public float massFactor = 1f;
 
     [Header("Visuals")]
@@ -22,6 +23,12 @@ public class Meteor2022WJ1 : MonoBehaviour
 
     public float ActualVelocity { get; private set; }
 
+    [Header("Smart Despawn")]
+    [Tooltip("Hvor lang tid meteoren må eksistere uden for skærmen, før den forsvinder.")]
+    public float offScreenLifetime = 3f;
+    private float despawnTimer;
+    private bool isVisible = false;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -30,74 +37,126 @@ public class Meteor2022WJ1 : MonoBehaviour
         // Start med en tilfældig fart mellem 1 og maxSpeed
         currentSpeed = Random.Range(1f, maxSpeed);
         lastPos = transform.position;
+
+        // Start despawn-timeren på max
+        despawnTimer = offScreenLifetime;
     }
 
     void Update()
     {
-        // 1. ACCELERATION: Meteoren vil altid prøve at nå sin maxSpeed i den retning den peger
+        // 1. ACCELERATION: Meteoren vil altid prøve at nå sin maxSpeed
         currentSpeed = Mathf.MoveTowards(currentSpeed, maxSpeed, acceleration * Time.deltaTime);
 
         // 2. BEVÆGELSE: Flyt i den aktuelle retning
         transform.Translate(currentDirection * currentSpeed * Time.deltaTime, Space.World);
 
-        // 3. BEREGN FAKTISK VELOCITY
+        // 3. BEREGN FAKTISK VELOCITY (Brugt til skadesberegning)
         if (Time.deltaTime > 0)
         {
             ActualVelocity = Vector3.Distance(transform.position, lastPos) / Time.deltaTime;
         }
         lastPos = transform.position;
 
-        // Cleanup
-        if (transform.position.x < -20f || transform.position.y > 15f || transform.position.y < -15f)
+        // 4. SMART DESPAWN LOGIKKEN
+        if (!isVisible)
         {
-            Destroy(gameObject);
+            despawnTimer -= Time.deltaTime;
+            if (despawnTimer <= 0)
+            {
+                // Vi udbetaler IKKE penge, hvis den bare forsvinder af sig selv
+                Destroy(gameObject);
+            }
+        }
+        else
+        {
+            // Reset timer når spilleren ser objektet
+            despawnTimer = offScreenLifetime;
         }
     }
 
-    // --- NY FUNKTION: KNOCKBACK ---
+    // --- UNITYS INDBYGGEDE KAMERA-MAGI ---
+    void OnBecameVisible() { isVisible = true; }
+    void OnBecameInvisible() { isVisible = false; }
+
+    // --- KNOCKBACK ---
     public void ApplyKnockback(Vector3 playerPosition, float impactForce)
     {
-        // 1. Find retningen væk fra spilleren
-        // (Mål-position minus Start-position giver retningen)
         Vector3 pushDirection = (transform.position - playerPosition).normalized;
-
-        // Vi sætter den nye retning. Da der ikke er luftmodstand i rummet, 
-        // vil den fortsætte i denne retning indtil den rammer noget andet.
         currentDirection = pushDirection;
 
-        // 2. DÆMPET FYSIK: Vi bruger kvadratroden af kraften for at undgå uendelig fart.
-        // Formel: $v = \sqrt{ImpactForce} \times 2$
-        // Dette gør, at progressionen føles naturlig, selvom din Masse bliver meget høj.
         float dampenedSpeed = Mathf.Sqrt(impactForce) * 2f;
-
-        // 3. LOFT (Cap): Sæt en absolut grænse for, hvor hurtigt den må flyve væk.
-        // Vi sætter den til 15f, så spilleren har en chance for at indhente den.
         float absoluteMax = 10f;
-
-        // Clamp sikrer at farten altid er mellem 2 og 15.
         currentSpeed = Mathf.Clamp(dampenedSpeed, 2f, absoluteMax);
-
-        Debug.Log("<color=green>KNOCKBACK:</color> Kraft: " + impactForce + " -> Resultatfart: " + currentSpeed);
     }
 
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
+
+        // Visuel skalering baseret på HP
         float healthPercent = currentHealth / maxHealth;
         transform.localScale = initialScale * Mathf.Clamp(healthPercent, 0.3f, 1f);
 
         if (currentHealth <= 0) Explode();
     }
 
-    void Explode() { /* Som før */ if (destructionParticles) Instantiate(destructionParticles, transform.position, Quaternion.identity); Destroy(gameObject); }
+    // --- HER UDBETALES BELØNNINGEN ---
+    void Explode()
+    {
+        // 1. Forbered belønningerne (Vi starter med fuldt beløb)
+        double finalCoinReward = coinReward;
+        int finalDiamondReward = diamondReward;
 
+        // Find spillerens controller for at tjekke pilot-status
+        MeteorController player = Object.FindFirstObjectByType<MeteorController>();
+
+        // 2. PILOT-SKAT (Kun på mønter!)
+        if (player != null && player.isAutoPiloting)
+        {
+            // Piloten tager 30% i løn (Du beholder 70%)
+            finalCoinReward = coinReward * 0.7;
+
+            Debug.Log("<color=orange>PILOT-SKAT:</color> Piloten tog 30% af mønterne. Du fik: "
+                + finalCoinReward.ToString("F1") + " mønter.");
+
+            // Bemærk: Vi rører ikke finalDiamondReward her, så den forbliver 100%
+        }
+        else
+        {
+            Debug.Log("<color=yellow>MANUELT KILL:</color> Du fik fuld belønning: "
+                + coinReward + " mønter!");
+        }
+
+        // 3. UDBETALING VIA GAMEMANAGER
+        if (GameManager.instance != null)
+        {
+            // Tilføj mønter (måske beskattet)
+            GameManager.instance.AddCoins(finalCoinReward);
+
+            // Tilføj diamanter (Altid ubeskåret!)
+            if (finalDiamondReward > 0)
+            {
+                GameManager.instance.AddDiamonds(finalDiamondReward);
+                Debug.Log("<color=cyan>DIAMANT-BONUS:</color> Du fandt " + finalDiamondReward + " diamanter!");
+            }
+        }
+
+        // 4. Visuelle effekter (Partikler)
+        if (destructionParticles != null)
+        {
+            Instantiate(destructionParticles, transform.position, Quaternion.identity);
+        }
+
+        // 5. Fjern meteoren fra spillet
+        Destroy(gameObject);
+    }
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
         {
+            // Undgå at skade spilleren hver eneste frame
             if (Time.time < lastHitTime + 0.5f) return;
 
-            // Vi kalder Knockback herfra eller fra PlayerSkade
             float damageToPlayer = ActualVelocity * massFactor * 0.5f;
             PlayerHealth playerHP = other.GetComponent<PlayerHealth>();
 
@@ -107,6 +166,7 @@ public class Meteor2022WJ1 : MonoBehaviour
                 lastHitTime = Time.time;
             }
 
+            // Meteoren tager selv skade ved sammenstød
             TakeDamage(1f);
         }
     }

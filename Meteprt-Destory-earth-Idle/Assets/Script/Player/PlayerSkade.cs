@@ -18,9 +18,25 @@ public class PlayerSkade : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         CollisionImpact impactData = other.GetComponentInParent<CollisionImpact>();
-        if (impactData != null)
+        if (impactData != null && controller != null)
         {
-            controller.ApplyImpact(impactData.speedPenalty);
+            float otherMass = impactData.objectMass;
+
+            MeteorController otherMeteor = other.GetComponentInParent<MeteorController>();
+            if (otherMeteor != null && otherMeteor != controller)
+            {
+                otherMass = otherMeteor.currentLiveMass;
+            }
+
+            Vector2 hitDirection = (transform.position - other.transform.position).normalized;
+
+            controller.ApplyImpact(
+                impactData.speedPenalty,
+                impactData.impactForce,
+                impactData.breakGrabOnHit,
+                otherMass,
+                hitDirection
+            );
         }
 
         if (other.CompareTag("Enemy") || other.CompareTag("SmallDebris"))
@@ -42,12 +58,8 @@ public class PlayerSkade : MonoBehaviour
                 enemyVelocity = new Vector3(enemyRb.linearVelocity.x, enemyRb.linearVelocity.y, 0);
             }
 
-
             float impactSpeed = Vector3.Distance(playerVelocity, enemyVelocity);
-
- 
             float speedBonus = Mathf.Clamp(impactSpeed * 0.05f, 0f, 1.0f);
-
             float damageToEnemy = rawMass * (1f + speedBonus);
 
             Meteor2022WJ1 enemy = other.GetComponentInParent<Meteor2022WJ1>();
@@ -57,7 +69,6 @@ public class PlayerSkade : MonoBehaviour
                 Debug.Log("<color=red>BRAG!</color> Skade: " + damageToEnemy.ToString("F1") + " (Impact Speed: " + impactSpeed.ToString("F1") + ")");
 
                 enemy.TakeDamage(damageToEnemy);
-
                 enemy.ApplyKnockback(transform.position, damageToEnemy * 0.5f);
 
                 hitCooldowns[instanceID] = Time.time;

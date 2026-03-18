@@ -11,10 +11,14 @@ public class SpaceCamera : MonoBehaviour
     public float smoothTime = 0.25f;
     private Vector3 currentVelocity = Vector3.zero;
 
-    [Header("Vertical Limits")]
-    [Tooltip("Sæt disse til det samme som i din PlayerBoundary script")]
-    public float minY = -8f;
-    public float maxY = 8f;
+    // --- NYT: DYNAMISKE GRÆNSER ---
+    [Header("Dynamic Vertical Limits")]
+    [Tooltip("Hvor meget banen starter med at fylde (Når scale er 1)")]
+    public float baseMinY = -8f;
+    public float baseMaxY = 8f;
+
+    [Tooltip("Hvor meget ekstra plads der lægges til toppen og bunden, for hver gang du vokser 1 i scale.")]
+    public float boundaryExpansionFactor = 4f;
 
     [Header("Dynamic Zoom")]
     public float minSize = 5f;
@@ -43,22 +47,35 @@ public class SpaceCamera : MonoBehaviour
         // 1. BEREGN ØNSKET POSITION
         Vector3 targetPos = target.position;
 
-        // Kig fremad baseret på fart
         if (playerController != null)
         {
             targetPos.x += (playerController.CurrentActualSpeed * leadAmount);
         }
 
-        // --- NY LOGIK: CLAMP KAMERAETS Y-AKSE ---
-        // Vi låser kameraets Y, så det ikke filmer uden for banen
-        targetPos.y = Mathf.Clamp(targetPos.y, minY, maxY);
+        // =========================================================
+        // --- NY LOGIK: UDVID VERDEN BASERET PÅ STØRRELSE ---
+        // =========================================================
+
+        // Vi tjekker hvor meget større end standard-størrelsen (1f) meteoren er
+        float extraScale = Mathf.Max(0, target.localScale.x - 1f);
+
+        // Vi regner ud hvor meget ekstra plads vi skal give kameraet
+        float expansion = extraScale * boundaryExpansionFactor;
+
+        // Vi udvider grænserne
+        float currentMinY = baseMinY - expansion;
+        float currentMaxY = baseMaxY + expansion;
+
+        // Vi låser kameraets Y til de NYE, udvidede grænser
+        targetPos.y = Mathf.Clamp(targetPos.y, currentMinY, currentMaxY);
 
         targetPos.z = -10f;
 
         // Bevæg kameraet blødt mod den begrænsede position
         transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref currentVelocity, smoothTime);
 
-        // 2. ZOOM LOGIK (Uændret, men stadig vigtig)
+        // =========================================================
+        // 2. ZOOM LOGIK
         if (playerController != null)
         {
             float speedPercent = Mathf.InverseLerp(0, playerController.maxSpeed, playerController.CurrentActualSpeed);
