@@ -1,0 +1,6 @@
+ændringer
+	spilleren tjener penge angående hvor meget skade de gør mod en anden meteor
+
+opgraderinger
+	Spillerens meteor får masse lig med en procentdel af skaden de gør mod en anden meteor
+	
