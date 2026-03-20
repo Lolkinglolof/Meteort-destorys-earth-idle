@@ -213,11 +213,11 @@ public class UpgradeManager : MonoBehaviour
     public float GetCurrentMass() => baseMass + (massLevel - 1) * massIncreasePerLevel;
     public float GetNextMass() => baseMass + (massLevel) * massIncreasePerLevel;
     public float GetMassCoinCost() => baseMassCost + (massLevel - 1) * 500f;
-    public int GetMassDiamondCost() => (massLevel < 3) ? 0 : Mathf.FloorToInt(massLevel / 3);
+    public int GetMassDiamondCost() => (massLevel < 3) ? 0 : Mathf.FloorToInt(massLevel / 10);
 
     public float GetEnduranceMultiplier() => Mathf.Clamp(1f - (enduranceLevel - 1) * enduranceReductionPerLevel, 0.5f, 1f);
     public float GetEnduranceUpgradeCost() => baseEnduranceCost * enduranceLevel;
-    public int GetEnduranceDiamondCost() => (enduranceLevel < 3) ? 0 : Mathf.FloorToInt(enduranceLevel / 3);
+    public int GetEnduranceDiamondCost() => (enduranceLevel < 3) ? 0 : Mathf.FloorToInt(enduranceLevel / 6); 
 
     public float GetCurrentMaxHealth() => baseHealth + (healthLevel - 1) * healthIncreasePerLevel;
     public float GetNextMaxHealth() => baseHealth + (healthLevel) * healthIncreasePerLevel;
