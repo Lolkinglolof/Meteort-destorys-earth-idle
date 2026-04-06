@@ -12,7 +12,7 @@ public class Meteor2022WJ1 : MonoBehaviour
     public float maxHealth = 40f;
     private float currentHealth;
     public double coinReward = 10;       // Udbetales ved eksplosion
-    public int diamondReward = 0; // Sæt denne til 1, 2 eller 5 i Unity for "Rare" meteorer
+    public int diamondReward = 0;        // Sæt denne til 1, 2 eller 5 i Unity for "Rare" meteorer
     public float massFactor = 1f;
 
     [Header("Visuals")]
@@ -25,12 +25,17 @@ public class Meteor2022WJ1 : MonoBehaviour
 
     [Header("Smart Despawn")]
     [Tooltip("Hvor lang tid meteoren må eksistere uden for skærmen, før den forsvinder.")]
-    public float offScreenLifetime = 3f;
+    public float offScreenLifetime = 5f;
     private float despawnTimer;
-    private bool isVisible = false;
+
+    // Optimeret kamera-tjek
+    private Camera mainCam;
 
     void Start()
     {
+        // Find kameraet én gang ved start
+        mainCam = Camera.main;
+
         currentHealth = maxHealth;
         initialScale = transform.localScale;
 
@@ -38,7 +43,6 @@ public class Meteor2022WJ1 : MonoBehaviour
         currentSpeed = Random.Range(1f, maxSpeed);
         lastPos = transform.position;
 
-        // Start despawn-timeren på max
         despawnTimer = offScreenLifetime;
     }
 
@@ -57,26 +61,31 @@ public class Meteor2022WJ1 : MonoBehaviour
         }
         lastPos = transform.position;
 
-        // 4. SMART DESPAWN LOGIKKEN
-        if (!isVisible)
+        // 4. SMART DESPAWN LOGIKKEN (Nu baseret på præcise skærm-koordinater)
+        if (mainCam != null)
         {
-            despawnTimer -= Time.deltaTime;
-            if (despawnTimer <= 0)
+            Vector3 viewportPos = mainCam.WorldToViewportPoint(transform.position);
+
+            // Tjekker om meteoren er uden for skærmen (med en lille margen på 20%)
+            bool isOffScreen = viewportPos.x < -0.2f || viewportPos.x > 1.2f ||
+                               viewportPos.y < -0.2f || viewportPos.y > 1.2f;
+
+            if (isOffScreen)
             {
-                // Vi udbetaler IKKE penge, hvis den bare forsvinder af sig selv
-                Destroy(gameObject);
+                despawnTimer -= Time.deltaTime;
+                if (despawnTimer <= 0)
+                {
+                    // Vi udbetaler IKKE penge, hvis den bare forsvinder af sig selv
+                    Destroy(gameObject);
+                }
+            }
+            else
+            {
+                // Reset timer når spilleren ser objektet (den er inde på skærmen)
+                despawnTimer = offScreenLifetime;
             }
         }
-        else
-        {
-            // Reset timer når spilleren ser objektet
-            despawnTimer = offScreenLifetime;
-        }
     }
-
-    // --- UNITYS INDBYGGEDE KAMERA-MAGI ---
-    void OnBecameVisible() { isVisible = true; }
-    void OnBecameInvisible() { isVisible = false; }
 
     // --- KNOCKBACK ---
     public void ApplyKnockback(Vector3 playerPosition, float impactForce)
@@ -150,6 +159,7 @@ public class Meteor2022WJ1 : MonoBehaviour
         // 5. Fjern meteoren fra spillet
         Destroy(gameObject);
     }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Player"))
