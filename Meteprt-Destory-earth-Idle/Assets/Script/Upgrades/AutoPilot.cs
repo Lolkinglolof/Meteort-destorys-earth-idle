@@ -25,7 +25,7 @@ public class AutoPilot : MonoBehaviour
     void Start()
     {
         controller = GetComponent<MeteorController>();
-        isSystemOn = true;
+        //isSystemOn = true;
     }
 
     void Update()
