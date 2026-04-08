@@ -1,3 +1,4 @@
+#if UNITY_EDITOR // Tells the compiler to only include this in the Editor
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
@@ -105,3 +106,4 @@ public class SnapBackgroundsTool
         return new Bounds(go.transform.position, Vector3.zero);
     }
 }
+#endif // Ends the Unity Editor check
