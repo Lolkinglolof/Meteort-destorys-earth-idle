@@ -57,8 +57,6 @@ public class AutoPilot : MonoBehaviour
             if (hintText != null) hintText.gameObject.SetActive(false); // <-- 2. NY LINJE: Skjul også hint tekst
             return;
         }
-
-        // 1. TOGGLE SYSTEM (P-Key)
         // 1. TOGGLE SYSTEM (P-Key)
         if (Input.GetKeyDown(KeyCode.P))
         {
@@ -140,7 +138,6 @@ public class AutoPilot : MonoBehaviour
     {
         if (UpgradeManager.Instance == null) return;
 
-        // <-- NYT: Tjek for at undgå at restarte timeren, hvis den allerede flyver
         if (isFlying) return;
 
         isFlying = true;
@@ -163,8 +160,6 @@ public class AutoPilot : MonoBehaviour
             cooldownTimer = maxCooldown;
         }
     }
-
-    // --- NAVIGATIONSLOGIK (Nu meget smartere) ---
     void FindAndMoveToTarget()
     {
         float closestDistance = Mathf.Infinity;
@@ -226,8 +221,6 @@ public class AutoPilot : MonoBehaviour
         // Pilot bruger stadig 20% fart via MeteorController
         controller.AutoPilotMove(finalTargetPosition);
     }
-    // --- NY SMART UI FUNKTION ---
-    // --- NY SMART UI FUNKTION MED TEKST ---
     void UpdateUIFeedback()
     {
         // 1. Check if the player has bought Auto-Pilot
@@ -236,7 +229,7 @@ public class AutoPilot : MonoBehaviour
             // Turn off image and texts completely and stop function
             if (autoPilotIcon != null) autoPilotIcon.gameObject.SetActive(false);
             if (statusText != null) statusText.gameObject.SetActive(false);
-            if (hintText != null) hintText.gameObject.SetActive(false); // <-- 2. NY LINJE: Skjul også hint tekst
+            if (hintText != null) hintText.gameObject.SetActive(false);
             return;
         }
 
@@ -251,8 +244,6 @@ public class AutoPilot : MonoBehaviour
             hintText.text = "[P]";
             hintText.color = Color.white;
         }
-
-        // 3. Resten af logikken for farver, sprites og tekst
 
         // 3. Resten af logikken for farver, sprites og tekst
         if (!isSystemOn)
@@ -281,7 +272,7 @@ public class AutoPilot : MonoBehaviour
             // Skift teksten alt efter om den flyver eller holder pause (cooldown)
             if (statusText != null)
             {
-                statusText.text = isFlying ? "ONLINE" : "STANDBY";
+                statusText.text = isFlying ? "Aktiv" : "Cooldown";
                 statusText.color = isFlying ? colorFlying : colorStandby;
             }
         }

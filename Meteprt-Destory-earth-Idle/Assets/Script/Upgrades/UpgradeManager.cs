@@ -60,7 +60,7 @@ public class UpgradeManager : MonoBehaviour
     [Header("UI References: Mass")]
     public TextMeshProUGUI massStatsText;
     public TextMeshProUGUI massCostText;
-    public TextMeshProUGUI massLevelText; // <-- 1. ADD THIS LINE HERE
+    public TextMeshProUGUI massLevelText;
     public Button massUpgradeButton;
 
     [Header("UI References: Endurance")]
@@ -284,9 +284,7 @@ public class UpgradeManager : MonoBehaviour
             int dCost = GetMassDiamondCost();
             massCostText.text = "Price: " + GetMassCoinCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
         }
-        if (massLevelText != null) massLevelText.text = "Lvl: " + massLevel; // <-- 2. ADD THIS LINE HERE
-
-        // Endurance
+        if (massLevelText != null) massLevelText.text = "Lvl: " + massLevel;
 
         // Endurance
         if (enduranceStatsText != null)

@@ -170,6 +170,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: VisionOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -560,7 +573,24 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      image (8)_0: 160114767289012160
+      image (8)_1: -6803707168244532474
+      image (8)_10: -790360539475968484
+      image (8)_11: -6411066344982091373
+      image (8)_12: -5420785574168909075
+      image (8)_13: -3653209366289346898
+      image (8)_14: -426586881300444975
+      image (8)_15: 8552315950283873161
+      image (8)_16: 4844630370888839301
+      image (8)_2: 853061185863605431
+      image (8)_3: 3665773001386564955
+      image (8)_4: 2435462680016140232
+      image (8)_5: 2784860274784940556
+      image (8)_6: -8975378428854021774
+      image (8)_7: 3172102044984261138
+      image (8)_8: 4295508823333418383
+      image (8)_9: -684354587570290260
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
