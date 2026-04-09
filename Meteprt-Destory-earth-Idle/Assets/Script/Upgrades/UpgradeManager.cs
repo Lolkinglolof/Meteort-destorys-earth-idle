@@ -60,6 +60,7 @@ public class UpgradeManager : MonoBehaviour
     [Header("UI References: Mass")]
     public TextMeshProUGUI massStatsText;
     public TextMeshProUGUI massCostText;
+    public TextMeshProUGUI massLevelText; // <-- 1. ADD THIS LINE HERE
     public Button massUpgradeButton;
 
     [Header("UI References: Endurance")]
@@ -258,7 +259,7 @@ public class UpgradeManager : MonoBehaviour
                 if (player != null)
                 {
                     liveMassDisplay.text = "Aktuel Masse: " + player.currentLiveMass.ToString("F1");
-                    liveMassDisplay.color = player.currentLiveMass < 5f ? Color.red : Color.white;
+                    liveMassDisplay.color = player.currentLiveMass < 5f ? Color.black : Color.black;
                 }
             }
         }
@@ -267,22 +268,25 @@ public class UpgradeManager : MonoBehaviour
     public void UpdateUI()
     {
         // Speed
-        if (speedStatsText != null) speedStatsText.text = "Fart: " + GetCurrentMaxSpeed().ToString("F1") + " -> " + GetNextMaxSpeed().ToString("F1");
-        if (speedCostText != null) speedCostText.text = "Pris: " + GetSpeedUpgradeCost().ToString("F0");
+        if (speedStatsText != null) speedStatsText.text = "Speed: " + GetCurrentMaxSpeed().ToString("F1") + " -> " + GetNextMaxSpeed().ToString("F1");
+        if (speedCostText != null) speedCostText.text = "Price: " + GetSpeedUpgradeCost().ToString("F0");
         if (speedLevelText != null) speedLevelText.text = "Lvl: " + speedLevel;
 
         // Accel
-        if (accelStatsText != null) accelStatsText.text = "Acc: " + GetCurrentAcceleration().ToString("F1") + " -> " + GetNextAcceleration().ToString("F1");
-        if (accelCostText != null) accelCostText.text = "Pris: " + GetAccelUpgradeCost().ToString("F0");
+        if (accelStatsText != null) accelStatsText.text = "Acc: " + GetCurrentAcceleration().ToString("F2") + " -> " + GetNextAcceleration().ToString("F2");
+        if (accelCostText != null) accelCostText.text = "Price: " + GetAccelUpgradeCost().ToString("F0");
         if (accelLevelText != null) accelLevelText.text = "Lvl: " + accelLevel;
 
         // Mass
-        if (massStatsText != null) massStatsText.text = "Masse: " + GetCurrentMass().ToString("F0") + " -> " + GetNextMass().ToString("F0");
+        if (massStatsText != null) massStatsText.text = "Mass: " + GetCurrentMass().ToString("F0") + " -> " + GetNextMass().ToString("F0");
         if (massCostText != null)
         {
             int dCost = GetMassDiamondCost();
-            massCostText.text = "Pris: " + GetMassCoinCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
+            massCostText.text = "Price: " + GetMassCoinCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
         }
+        if (massLevelText != null) massLevelText.text = "Lvl: " + massLevel; // <-- 2. ADD THIS LINE HERE
+
+        // Endurance
 
         // Endurance
         if (enduranceStatsText != null)
@@ -294,7 +298,7 @@ public class UpgradeManager : MonoBehaviour
         if (enduranceCostText != null)
         {
             int dCost = GetEnduranceDiamondCost();
-            enduranceCostText.text = "Pris: " + GetEnduranceUpgradeCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
+            enduranceCostText.text = "Price: " + GetEnduranceUpgradeCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
         }
         if (enduranceLevelText != null) enduranceLevelText.text = "Lvl: " + enduranceLevel;
 
@@ -302,7 +306,7 @@ public class UpgradeManager : MonoBehaviour
         if (healthStatsText != null)
             healthStatsText.text = "Max HP: " + GetCurrentMaxHealth().ToString("F0") + " -> " + GetNextMaxHealth().ToString("F0");
         if (healthCostText != null)
-            healthCostText.text = "Pris: " + GetHealthUpgradeCost().ToString("F0"); // Kun mønter!
+            healthCostText.text = "Price: " + GetHealthUpgradeCost().ToString("F0"); // Kun mønter!
         if (healthLevelText != null)
             healthLevelText.text = "Lvl: " + healthLevel;
 
@@ -317,7 +321,7 @@ public class UpgradeManager : MonoBehaviour
         if (autoPilotCostText != null)
         {
             int dCost = GetAutoPilotDiamondCost();
-            autoPilotCostText.text = "Pris: " + GetAutoPilotCoinCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
+            autoPilotCostText.text = "Price: " + GetAutoPilotCoinCost().ToString("F0") + (dCost > 0 ? " & " + dCost + " Dia" : "");
         }
         if (autoPilotLevelText != null)
             autoPilotLevelText.text = "Lvl: " + autoPilotLevel;

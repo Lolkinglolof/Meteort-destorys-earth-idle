@@ -94,7 +94,7 @@ public class GameManager : MonoBehaviour
     void UpdateUI()
     {
         if (coinText != null)
-            coinText.text = "Mønter: " + System.Math.Floor(coins).ToString("N0");
+            coinText.text = "Coins: " + System.Math.Floor(coins).ToString("N0");
 
         if (diamondText != null)
             diamondText.text = "Dia: " + diamonds.ToString();
