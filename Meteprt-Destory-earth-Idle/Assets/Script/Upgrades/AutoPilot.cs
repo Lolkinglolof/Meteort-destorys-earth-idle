@@ -13,6 +13,8 @@ public class AutoPilot : MonoBehaviour
     public float cooldownTimer = 0f;
     private float maxCooldown = 15f;
 
+    private float maxActiveTime = 0f; // <-- ADD THIS
+
     private bool isFlying = false;
 
     [Header("System Status")]
@@ -32,6 +34,8 @@ public class AutoPilot : MonoBehaviour
     private Color colorFlying = Color.white;
     private Color colorStandby = Color.yellow;
     private Color colorOffline = Color.gray;
+
+
     void Start()
     {
         controller = GetComponent<MeteorController>();
@@ -137,12 +141,14 @@ public class AutoPilot : MonoBehaviour
     void ActivatePilot()
     {
         if (UpgradeManager.Instance == null) return;
-
         if (isFlying) return;
 
         isFlying = true;
         controller.isAutoPiloting = true;
+
         activeTimer = UpgradeManager.Instance.GetCurrentAutoPilotTime();
+        maxActiveTime = activeTimer; // <-- SAVE FULL ACTIVE TIME HERE
+
         Debug.Log("<color=green>PILOT AKTIVERET (Pilot bruger kun 20% Speed af din stats - 30% Skat)</color>");
     }
 
@@ -226,54 +232,67 @@ public class AutoPilot : MonoBehaviour
         // 1. Check if the player has bought Auto-Pilot
         if (UpgradeManager.Instance != null && UpgradeManager.Instance.autoPilotLevel == 0)
         {
-            // Turn off image and texts completely and stop function
             if (autoPilotIcon != null) autoPilotIcon.gameObject.SetActive(false);
             if (statusText != null) statusText.gameObject.SetActive(false);
             if (hintText != null) hintText.gameObject.SetActive(false);
             return;
         }
 
-        // 2. Sørg for at billedet og teksten er tændt, nu hvor vi ved, den ER købt
+        // 2. Make sure UI is visible
         if (autoPilotIcon != null && !autoPilotIcon.gameObject.activeSelf) autoPilotIcon.gameObject.SetActive(true);
         if (statusText != null && !statusText.gameObject.activeSelf) statusText.gameObject.SetActive(true);
 
-        // <-- 3. NY BLOK: Tænd hint teksten og skriv automatisk [P]
         if (hintText != null && !hintText.gameObject.activeSelf)
         {
             hintText.gameObject.SetActive(true);
+        }
+
+        if (hintText != null)
+        {
             hintText.text = "[P]";
             hintText.color = Color.white;
         }
 
-        // 3. Resten af logikken for farver, sprites og tekst
-        if (!isSystemOn)
+        if (autoPilotIcon != null)
         {
-            // Systemet er slukket: Vis Offline billedet og skriv OFFLINE
-            if (autoPilotIcon != null)
-            {
-                autoPilotIcon.sprite = iconOffline;
-                autoPilotIcon.color = colorOffline;
-            }
-            if (statusText != null)
-            {
-                statusText.text = "Off";
-                statusText.color = colorOffline;
-            }
-        }
-        else
-        {
-            // Systemet er tændt: Vis Online billedet
-            if (autoPilotIcon != null)
-            {
-                autoPilotIcon.sprite = iconOnline;
-                autoPilotIcon.color = isFlying ? colorFlying : colorStandby;
-            }
+            autoPilotIcon.sprite = isSystemOn ? iconOnline : iconOffline;
 
-            // Skift teksten alt efter om den flyver eller holder pause (cooldown)
-            if (statusText != null)
+            if (!isSystemOn)
             {
-                statusText.text = isFlying ? "On" : "Cooldown";
-                statusText.color = isFlying ? colorFlying : colorStandby;
+                autoPilotIcon.color = colorOffline;
+                autoPilotIcon.fillAmount = 0f;
+
+                if (statusText != null)
+                {
+                    statusText.text = "Off";
+                    statusText.color = colorOffline;
+                }
+            }
+            else if (isFlying)
+            {
+                autoPilotIcon.color = colorFlying;
+                autoPilotIcon.fillAmount = maxActiveTime > 0f
+                    ? Mathf.Clamp01(activeTimer / maxActiveTime)
+                    : 0f;
+
+                if (statusText != null)
+                {
+                    statusText.text = "On";
+                    statusText.color = colorFlying;
+                }
+            }
+            else
+            {
+                autoPilotIcon.color = colorStandby;
+                autoPilotIcon.fillAmount = maxCooldown > 0f
+                    ? Mathf.Clamp01(1f - (cooldownTimer / maxCooldown))
+                    : 0f;
+
+                if (statusText != null)
+                {
+                    statusText.text = "Cooldown";
+                    statusText.color = colorStandby;
+                }
             }
         }
     }
