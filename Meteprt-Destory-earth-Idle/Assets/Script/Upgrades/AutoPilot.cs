@@ -256,7 +256,7 @@ public class AutoPilot : MonoBehaviour
             }
             if (statusText != null)
             {
-                statusText.text = "OFFLINE";
+                statusText.text = "Off";
                 statusText.color = colorOffline;
             }
         }
@@ -272,7 +272,7 @@ public class AutoPilot : MonoBehaviour
             // Skift teksten alt efter om den flyver eller holder pause (cooldown)
             if (statusText != null)
             {
-                statusText.text = isFlying ? "Aktiv" : "Cooldown";
+                statusText.text = isFlying ? "On" : "Cooldown";
                 statusText.color = isFlying ? colorFlying : colorStandby;
             }
         }
