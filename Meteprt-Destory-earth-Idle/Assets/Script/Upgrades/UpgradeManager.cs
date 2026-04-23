@@ -127,6 +127,8 @@ public class UpgradeManager : MonoBehaviour
             SaveUpgrades();
             UpdatePlayerStats();
             UpdateUI();
+
+            TutorialManager.Instance?.ReportUpgradeBought();
         }
     }
 
@@ -138,6 +140,8 @@ public class UpgradeManager : MonoBehaviour
             SaveUpgrades();
             UpdatePlayerStats();
             UpdateUI();
+
+            TutorialManager.Instance?.ReportUpgradeBought();
         }
     }
 
@@ -155,6 +159,8 @@ public class UpgradeManager : MonoBehaviour
                 SaveUpgrades();
                 UpdatePlayerStats();
                 UpdateUI();
+
+                TutorialManager.Instance?.ReportUpgradeBought();
             }
         }
     }
@@ -173,6 +179,8 @@ public class UpgradeManager : MonoBehaviour
                 SaveUpgrades();
                 UpdatePlayerStats();
                 UpdateUI();
+
+                TutorialManager.Instance?.ReportUpgradeBought();
             }
         }
     }
@@ -184,6 +192,8 @@ public class UpgradeManager : MonoBehaviour
             SaveUpgrades();
             UpdatePlayerStats();
             UpdateUI();
+
+            TutorialManager.Instance?.ReportUpgradeBought();
         }
     }
     public void UpgradeAutoPilot()
@@ -195,11 +205,18 @@ public class UpgradeManager : MonoBehaviour
         {
             if (GameManager.instance.SpendCoins(coinCost))
             {
+                bool wasLockedBefore = autoPilotLevel == 0;
+
                 GameManager.instance.AddDiamonds(-diamondCost);
                 autoPilotLevel++;
                 SaveUpgrades();
                 UpdatePlayerStats();
                 UpdateUI();
+
+                TutorialManager.Instance?.ReportUpgradeBought();
+
+                if (wasLockedBefore)
+                    TutorialManager.Instance?.ReportAutopilotBoughtFirstTime();
             }
         }
     }

@@ -181,6 +181,15 @@ public class MeteorController : MonoBehaviour
         // Ignorer hvis vi rammer os selv / vores egne child colliders
         if (otherMeteor == this) return;
 
+        // Tutorial: collision med meteor tæller også, ikke kun destroy
+        if (TutorialManager.Instance != null)
+        {
+            if (otherMeteor != null)
+                TutorialManager.Instance.ReportMeteorHit(otherMeteor.gameObject);
+            else
+                TutorialManager.Instance.ReportMeteorHit(other.gameObject);
+        }
+
         float otherMass = impact.objectMass;
 
         if (otherMeteor != null)
@@ -198,6 +207,10 @@ public class MeteorController : MonoBehaviour
             hitDirection
         );
     }
+
+
+
+
 
     void MoveMeteorToMouse()
     {

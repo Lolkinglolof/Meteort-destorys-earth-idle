@@ -142,12 +142,15 @@ public class AutoPilot : MonoBehaviour
     {
         if (UpgradeManager.Instance == null) return;
         if (isFlying) return;
+        if (UpgradeManager.Instance.autoPilotLevel <= 0) return;
 
         isFlying = true;
         controller.isAutoPiloting = true;
 
         activeTimer = UpgradeManager.Instance.GetCurrentAutoPilotTime();
-        maxActiveTime = activeTimer; // <-- SAVE FULL ACTIVE TIME HERE
+        maxActiveTime = activeTimer;
+
+        TryCompleteAutopilotTutorial();
 
         Debug.Log("<color=green>PILOT AKTIVERET (Pilot bruger kun 20% Speed af din stats - 30% Skat)</color>");
     }
@@ -294,6 +297,22 @@ public class AutoPilot : MonoBehaviour
                     statusText.color = colorStandby;
                 }
             }
+        }
+    }
+    private void TryCompleteAutopilotTutorial()
+    {
+        if (TutorialManager.Instance == null)
+            return;
+
+        if (isFlying)
+        {
+            TutorialManager.Instance.ReportAutopilotUsed();
+            return;
+        }
+
+        if (isSystemOn && cooldownTimer > 0f)
+        {
+            TutorialManager.Instance.ReportAutopilotUsed();
         }
     }
 }
