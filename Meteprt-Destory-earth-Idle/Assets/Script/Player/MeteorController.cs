@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class MeteorController : MonoBehaviour
 {
@@ -18,6 +21,9 @@ public class MeteorController : MonoBehaviour
     private Vector3 lastPosition;
     private Camera mainCamera;
     private bool isGrabbing = false;
+    [SerializeField] GraphicRaycaster graphicRaycaster;
+    [SerializeField] EventSystem eventsystem;
+    [SerializeField] PointerEventData pointerEventData;
 
     [Header("Live Stats")]
     public float currentLiveMass;
@@ -113,7 +119,19 @@ public class MeteorController : MonoBehaviour
 
         if (!isAutoPiloting && controlLockTimer <= 0f)
         {
-            if (Input.GetMouseButtonDown(0)) isGrabbing = true;
+            bool hitUI = false;
+            pointerEventData = new PointerEventData(eventsystem);
+            pointerEventData.position = Input.mousePosition;
+            List<RaycastResult> resultAppendList = new List<RaycastResult>();
+            graphicRaycaster.Raycast(pointerEventData, resultAppendList);
+            foreach (RaycastResult result in resultAppendList)
+            {
+                if (result.gameObject.layer == 5)
+                {
+                    hitUI = true;
+                }
+            }
+            if (Input.GetMouseButtonDown(0) && !hitUI) isGrabbing = true;
             if (Input.GetMouseButtonUp(0)) isGrabbing = false;
 
             if (isGrabbing)

@@ -243772,6 +243772,8 @@ MonoBehaviour:
   maxSpeed: 4
   acceleration: 0.1
   cameraScrollSpeed: 2
+  graphicRaycaster: {fileID: 2128826154}
+  eventsystem: {fileID: 1864892645}
   currentLiveMass: 0
   knockbackDamping: 8
   controlLockTimeAfterHit: 0.15
