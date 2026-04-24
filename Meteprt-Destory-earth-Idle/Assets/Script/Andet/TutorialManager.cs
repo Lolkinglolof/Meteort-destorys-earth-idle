@@ -33,7 +33,20 @@ public class TutorialManager : MonoBehaviour
 
         public Color highlightColor = new Color(1f, 0.85f, 0.2f, 1f);
     }
-
+    public bool ShouldUseUnscaledPlayerMovement()
+    {
+        return tutorialPausedGame &&
+               tutorialRunning &&
+               currentStepIndex < steps.Length &&
+               steps[currentStepIndex].stepType == StepType.WaitForMove;
+    }
+    public bool ShouldFreezePassivePlayerDrift()
+    {
+        return tutorialPausedGame &&
+               tutorialRunning &&
+               currentStepIndex < steps.Length &&
+               steps[currentStepIndex].stepType == StepType.WaitForMove;
+    }
     public enum StepType
     {
         InfoOnly,
@@ -88,6 +101,7 @@ public class TutorialManager : MonoBehaviour
     public float moveDistanceThreshold = 0.35f;
     [Header("Tutorial Pause")]
     public bool pauseGameDuringUpgradeStep = true;
+    public bool pauseGameDuringMoveStep = true;
 
     private bool tutorialPausedGame = false;
     private float tutorialPreviousTimeScale = 1f;
@@ -180,11 +194,9 @@ public class TutorialManager : MonoBehaviour
             PlayerPrefs.SetInt(autopilotUnlockedKey, 1);
             PlayerPrefs.Save();
 
-            if (tutorialRunning &&
-                currentStepIndex < steps.Length &&
-                steps[currentStepIndex].stepType == StepType.WaitForAutopilotUsed)
+            if (autopilotTutorialPending && !autopilotTutorialCompleted)
             {
-                ShowStep();
+                ShowDeferredAutopilotTutorial();
             }
         }
     }
@@ -612,9 +624,11 @@ public class TutorialManager : MonoBehaviour
     private void UpdateTutorialPauseState(TutorialStep step)
     {
         bool shouldPause =
-            pauseGameDuringUpgradeStep &&
             step != null &&
-            step.stepType == StepType.WaitForUpgradeBought;
+            (
+                (pauseGameDuringUpgradeStep && step.stepType == StepType.WaitForUpgradeBought) ||
+                (pauseGameDuringMoveStep && step.stepType == StepType.WaitForMove)
+            );
 
         if (shouldPause)
         {
@@ -644,4 +658,5 @@ public class TutorialManager : MonoBehaviour
         Time.timeScale = tutorialPreviousTimeScale;
         tutorialPausedGame = false;
     }
+
 }

@@ -5,6 +5,13 @@ using UnityEngine.UI;
 
 public class MeteorController : MonoBehaviour
 {
+    private float GetGameplayDeltaTime()
+    {
+        if (TutorialManager.Instance != null && TutorialManager.Instance.ShouldUseUnscaledPlayerMovement())
+            return Time.unscaledDeltaTime;
+
+        return Time.deltaTime;
+    }
     [HideInInspector] public bool isAutoPiloting = false;
 
     [Header("Movement Stats")]
@@ -108,6 +115,8 @@ public class MeteorController : MonoBehaviour
 
     void Update()
     {
+        float dt = GetGameplayDeltaTime();
+
         RefreshMeteorScale();
 
         // 80% ved autopilot
@@ -115,53 +124,72 @@ public class MeteorController : MonoBehaviour
         float dynamicMax = maxSpeed * speedMultiplier;
         float dynamicAccel = acceleration * speedMultiplier;
 
-        controlLockTimer = Mathf.Max(0f, controlLockTimer - Time.deltaTime);
+        bool freezePassiveDrift =
+            TutorialManager.Instance != null &&
+            TutorialManager.Instance.ShouldFreezePassivePlayerDrift();
+
+        controlLockTimer = Mathf.Max(0f, controlLockTimer - dt);
 
         if (!isAutoPiloting && controlLockTimer <= 0f)
         {
             bool hitUI = false;
             pointerEventData = new PointerEventData(eventsystem);
             pointerEventData.position = Input.mousePosition;
+
             List<RaycastResult> resultAppendList = new List<RaycastResult>();
             graphicRaycaster.Raycast(pointerEventData, resultAppendList);
+
             foreach (RaycastResult result in resultAppendList)
             {
                 if (result.gameObject.layer == 5)
                 {
                     hitUI = true;
+                    break;
                 }
             }
-            if (Input.GetMouseButtonDown(0) && !hitUI) isGrabbing = true;
-            if (Input.GetMouseButtonUp(0)) isGrabbing = false;
+
+            if (Input.GetMouseButtonDown(0) && !hitUI)
+                isGrabbing = true;
+
+            if (Input.GetMouseButtonUp(0))
+                isGrabbing = false;
 
             if (isGrabbing)
             {
-                currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, dynamicMax, dynamicAccel * Time.deltaTime);
+                currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, dynamicMax, dynamicAccel * dt);
                 MoveMeteorToMouse();
             }
             else
             {
-                currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, minSpeed, dynamicAccel * 2f * Time.deltaTime);
-                transform.Translate(Vector3.right * cameraScrollSpeed * Time.deltaTime, Space.World);
+                currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, minSpeed, dynamicAccel * 2f * dt);
+
+                if (!freezePassiveDrift)
+                {
+                    transform.Translate(Vector3.right * cameraScrollSpeed * dt, Space.World);
+                }
             }
         }
         else if (!isAutoPiloting)
         {
-            currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, minSpeed, dynamicAccel * 2f * Time.deltaTime);
-            transform.Translate(Vector3.right * cameraScrollSpeed * Time.deltaTime, Space.World);
+            currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, minSpeed, dynamicAccel * 2f * dt);
+
+            if (!freezePassiveDrift)
+            {
+                transform.Translate(Vector3.right * cameraScrollSpeed * dt, Space.World);
+            }
         }
 
         // Knockback bevægelse
         if (knockbackVelocity.sqrMagnitude > 0.001f)
         {
-            transform.position += (Vector3)(knockbackVelocity * Time.deltaTime);
-            knockbackVelocity = Vector2.Lerp(knockbackVelocity, Vector2.zero, knockbackDamping * Time.deltaTime);
+            transform.position += (Vector3)(knockbackVelocity * dt);
+            knockbackVelocity = Vector2.Lerp(knockbackVelocity, Vector2.zero, knockbackDamping * dt);
         }
 
         // Velocity tracking
-        if (Time.deltaTime > 0f)
+        if (dt > 0f)
         {
-            CurrentVelocity = (transform.position - lastPosition) / Time.deltaTime;
+            CurrentVelocity = (transform.position - lastPosition) / dt;
             CurrentActualSpeed = CurrentVelocity.magnitude;
         }
 
@@ -170,17 +198,18 @@ public class MeteorController : MonoBehaviour
 
     public void AutoPilotMove(Vector3 targetPosition)
     {
-        // 80% ved autopilot
+        float dt = GetGameplayDeltaTime();
+
         float speedMultiplier = 0.2f;
         float dynamicMax = maxSpeed * speedMultiplier;
         float dynamicAccel = acceleration * speedMultiplier;
 
-        currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, dynamicMax, dynamicAccel * Time.deltaTime);
+        currentTargetSpeed = Mathf.MoveTowards(currentTargetSpeed, dynamicMax, dynamicAccel * dt);
 
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
-            currentTargetSpeed * Time.deltaTime
+            currentTargetSpeed * dt
         );
     }
 
@@ -225,14 +254,11 @@ public class MeteorController : MonoBehaviour
             hitDirection
         );
     }
-
-
-
-
-
     void MoveMeteorToMouse()
     {
         if (mainCamera == null) return;
+
+        float dt = GetGameplayDeltaTime();
 
         Vector3 mousePos = Input.mousePosition;
         mousePos.z = 10f;
@@ -243,7 +269,7 @@ public class MeteorController : MonoBehaviour
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
-            currentTargetSpeed * Time.deltaTime
+            currentTargetSpeed * dt
         );
     }
 }
