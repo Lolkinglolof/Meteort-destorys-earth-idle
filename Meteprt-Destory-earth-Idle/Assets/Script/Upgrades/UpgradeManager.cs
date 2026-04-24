@@ -222,7 +222,7 @@ public class UpgradeManager : MonoBehaviour
     }
     public float GetCurrentMaxSpeed() => baseMaxSpeed + (speedLevel - 1) * speedIncreasePerLevel;
     public float GetNextMaxSpeed() => baseMaxSpeed + (speedLevel) * speedIncreasePerLevel;
-    public float GetSpeedUpgradeCost() => baseSpeedCost * speedLevel;
+    //public float GetSpeedUpgradeCost() => baseSpeedCost * Mathf.Pow(3f, speedLevel - 1);
 
     public float GetCurrentAcceleration() => baseAcceleration + (accelLevel - 1) * accelIncreasePerLevel;
     public float GetNextAcceleration() => baseAcceleration + (accelLevel) * accelIncreasePerLevel;
@@ -231,11 +231,11 @@ public class UpgradeManager : MonoBehaviour
     public float GetCurrentMass() => baseMass + (massLevel - 1) * massIncreasePerLevel;
     public float GetNextMass() => baseMass + (massLevel) * massIncreasePerLevel;
     public float GetMassCoinCost() => baseMassCost + (massLevel - 1) * 500f;
-    public int GetMassDiamondCost() => (massLevel < 3) ? 0 : Mathf.FloorToInt(massLevel / 10);
+    //public int GetMassDiamondCost() => (massLevel < 3) ? 0 : Mathf.FloorToInt(massLevel / 10);
 
     public float GetEnduranceMultiplier() => Mathf.Clamp(1f - (enduranceLevel - 1) * enduranceReductionPerLevel, 0.5f, 1f);
     public float GetEnduranceUpgradeCost() => baseEnduranceCost * enduranceLevel;
-    public int GetEnduranceDiamondCost() => (enduranceLevel < 3) ? 0 : Mathf.FloorToInt(enduranceLevel / 6); 
+    //public int GetEnduranceDiamondCost() => (enduranceLevel < 3) ? 0 : Mathf.FloorToInt(enduranceLevel / 6); 
 
     public float GetCurrentMaxHealth() => baseHealth + (healthLevel - 1) * healthIncreasePerLevel;
     public float GetNextMaxHealth() => baseHealth + (healthLevel) * healthIncreasePerLevel;
@@ -247,8 +247,27 @@ public class UpgradeManager : MonoBehaviour
 
     // Prisen stiger nu baseret på det rene level (ingen -1 for at regne pris ud)
     public float GetAutoPilotCoinCost() => baseAutoPilotCoinCost + (autoPilotLevel) * autoPilotCoinCostIncrease;
-    public int GetAutoPilotDiamondCost() => (autoPilotLevel < 3) ? 0 : Mathf.FloorToInt(autoPilotLevel / 3) * 2;
+    //public int GetAutoPilotDiamondCost() => (autoPilotLevel < 3) ? 0 : Mathf.FloorToInt(autoPilotLevel / 3) * 2;
+    public float GetSpeedUpgradeCost()
+    {
+        float extraPercentOfBase = baseSpeedCost * 6.40f; //
+        return Mathf.Round(baseSpeedCost + (speedLevel - 1) * (baseSpeedCost + extraPercentOfBase));
+    }
 
+    public int GetMassDiamondCost()
+    {
+        return (massLevel < 3) ? 0 : (massLevel - 2);
+    }
+
+    public int GetEnduranceDiamondCost()
+    {
+        return (enduranceLevel < 3) ? 0 : (enduranceLevel - 2);
+    }
+
+    public int GetAutoPilotDiamondCost()
+    {
+        return (autoPilotLevel < 3) ? 0 : (autoPilotLevel - 2);
+    }
     void Update()
     {
         if (GameManager.instance != null)

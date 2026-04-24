@@ -16,6 +16,22 @@ public class TutorialManager : MonoBehaviour
         public string description;
 
         public StepType stepType;
+
+        [Header("Highlight")]
+        public bool useDimOverlay = true;
+
+        [Tooltip("UI thing to highlight, like a button image or icon.")]
+        public Graphic uiHighlightGraphic;
+
+        [Tooltip("World thing to highlight, like a sprite renderer.")]
+        public SpriteRenderer worldHighlightRenderer;
+
+        [Tooltip("What should pulse. Usually the button/object transform.")]
+        public Transform pulseTarget;
+        [Tooltip("Turn this on only if the highlighted UI graphic itself must stay clickable.")]
+
+
+        public Color highlightColor = new Color(1f, 0.85f, 0.2f, 1f);
     }
 
     public enum StepType
@@ -26,6 +42,23 @@ public class TutorialManager : MonoBehaviour
         WaitForUpgradeBought,
         WaitForAutopilotUsed
     }
+    [Header("Highlight / Focus")]
+    public Image dimOverlay;
+    public Color dimOverlayColor = new Color(0f, 0f, 0f, 0.65f);
+    public float pulseSpeed = 5f;
+    public float pulseScaleAmount = 0.08f;
+    public bool useUnscaledPulseTime = true;
+
+    private Graphic currentUiHighlight;
+    private Color currentUiOriginalColor;
+
+
+    private SpriteRenderer currentWorldHighlight;
+    private Color currentWorldOriginalColor;
+
+    private Transform currentPulseTarget;
+    private Vector3 currentPulseOriginalScale;
+    private bool pulseActive;
 
     [Header("Tutorial Steps")]
     public TutorialStep[] steps;
@@ -53,7 +86,11 @@ public class TutorialManager : MonoBehaviour
 
     [Tooltip("How far the player must move before WaitForMove is completed.")]
     public float moveDistanceThreshold = 0.35f;
+    [Header("Tutorial Pause")]
+    public bool pauseGameDuringUpgradeStep = true;
 
+    private bool tutorialPausedGame = false;
+    private float tutorialPreviousTimeScale = 1f;
     [Tooltip("If true, holding left mouse button also counts as movement intent.")]
     public bool requireMouseHoldForMoveStep = true;
 
@@ -99,6 +136,12 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (steps == null || steps.Length == 0)
+        {
+            EndTutorialInstant();
+            return;
+        }
+
         currentStepIndex = PlayerPrefs.GetInt(tutorialStepKey, 0);
         currentStepIndex = Mathf.Clamp(currentStepIndex, 0, steps.Length);
 
@@ -117,6 +160,7 @@ public class TutorialManager : MonoBehaviour
             return;
 
         CheckMoveStepProgress();
+        UpdateHighlightPulse();
     }
 
     private void TryFindPlayer()
@@ -194,11 +238,12 @@ public class TutorialManager : MonoBehaviour
         if (!tutorialRunning || currentStepIndex >= steps.Length)
         {
             FinishTutorial();
+
             return;
         }
 
         TutorialStep step = steps[currentStepIndex];
-
+        UpdateTutorialPauseState(step);
         // Autopilot-step må først blive aktiv/synlig,
         // når autopilot er købt første gang.
         if (step.stepType == StepType.WaitForAutopilotUsed && !autopilotUnlockedOnce)
@@ -226,7 +271,7 @@ public class TutorialManager : MonoBehaviour
 
         if (nextButton != null)
             nextButton.gameObject.SetActive(infoOnly);
-
+        ApplyStepHighlight(step);
         if (step.stepType == StepType.WaitForMove && playerController != null)
         {
             moveStepStartPosition = playerController.transform.position;
@@ -271,8 +316,11 @@ public class TutorialManager : MonoBehaviour
 
     private void FinishTutorial()
     {
-        tutorialRunning = false;
+        ResumeGameFromTutorialPause();
 
+        tutorialRunning = false;
+        moveStepTrackingStarted = false;
+        pulseActive = false;
         PlayerPrefs.SetInt(tutorialFinishedKey, 1);
         PlayerPrefs.DeleteKey(tutorialStepKey);
         PlayerPrefs.Save();
@@ -284,6 +332,9 @@ public class TutorialManager : MonoBehaviour
 
     private void EndTutorialInstant()
     {
+        ResumeGameFromTutorialPause();
+        ClearStepHighlight();
+
         if (tutorialPanel != null)
             tutorialPanel.SetActive(false);
     }
@@ -423,6 +474,8 @@ public class TutorialManager : MonoBehaviour
     }
     public void ResetTutorialProgress()
     {
+        ResumeGameFromTutorialPause();
+
         PlayerPrefs.DeleteKey(tutorialFinishedKey);
         PlayerPrefs.DeleteKey(tutorialStepKey);
         PlayerPrefs.DeleteKey(autopilotUnlockedKey);
@@ -442,6 +495,15 @@ public class TutorialManager : MonoBehaviour
         StartTutorial();
 
         Debug.Log("Tutorial progress has been reset and restarted.");
+    }
+    private void OnDisable()
+    {
+        ResumeGameFromTutorialPause();
+    }
+
+    private void OnDestroy()
+    {
+        ResumeGameFromTutorialPause();
     }
     private void ShowDeferredAutopilotTutorial()
     {
@@ -473,5 +535,113 @@ public class TutorialManager : MonoBehaviour
         }
 
         return -1;
+    }
+    private void ApplyStepHighlight(TutorialStep step)
+    {
+        ClearStepHighlight();
+
+        if (dimOverlay != null)
+        {
+            dimOverlay.gameObject.SetActive(step.useDimOverlay);
+            dimOverlay.color = dimOverlayColor;
+            dimOverlay.raycastTarget = false;
+        }
+
+        if (step.uiHighlightGraphic != null)
+        {
+            currentUiHighlight = step.uiHighlightGraphic;
+            currentUiOriginalColor = currentUiHighlight.color;
+
+            // Only visual change. Do NOT change raycast/canvas/sorting.
+            currentUiHighlight.color = step.highlightColor;
+
+            if (step.pulseTarget == null)
+                currentPulseTarget = currentUiHighlight.transform;
+        }
+
+        if (step.worldHighlightRenderer != null)
+        {
+            currentWorldHighlight = step.worldHighlightRenderer;
+            currentWorldOriginalColor = currentWorldHighlight.color;
+            currentWorldHighlight.color = step.highlightColor;
+
+            if (step.pulseTarget == null && currentPulseTarget == null)
+                currentPulseTarget = currentWorldHighlight.transform;
+        }
+
+        if (step.pulseTarget != null)
+            currentPulseTarget = step.pulseTarget;
+
+        if (currentPulseTarget != null)
+        {
+            currentPulseOriginalScale = currentPulseTarget.localScale;
+            pulseActive = true;
+        }
+    }
+
+    private void ClearStepHighlight()
+    {
+        if (currentUiHighlight != null)
+            currentUiHighlight.color = currentUiOriginalColor;
+
+        if (currentWorldHighlight != null)
+            currentWorldHighlight.color = currentWorldOriginalColor;
+
+        if (currentPulseTarget != null)
+            currentPulseTarget.localScale = currentPulseOriginalScale;
+
+        currentUiHighlight = null;
+        currentWorldHighlight = null;
+        currentPulseTarget = null;
+
+        pulseActive = false;
+
+        if (dimOverlay != null)
+            dimOverlay.gameObject.SetActive(false);
+    }
+
+    private void UpdateHighlightPulse()
+    {
+        if (!pulseActive || currentPulseTarget == null)
+            return;
+
+        float t = useUnscaledPulseTime ? Time.unscaledTime : Time.time;
+        float pulse = 1f + Mathf.Sin(t * pulseSpeed) * pulseScaleAmount;
+        currentPulseTarget.localScale = currentPulseOriginalScale * pulse;
+    }
+    private void UpdateTutorialPauseState(TutorialStep step)
+    {
+        bool shouldPause =
+            pauseGameDuringUpgradeStep &&
+            step != null &&
+            step.stepType == StepType.WaitForUpgradeBought;
+
+        if (shouldPause)
+        {
+            PauseGameForTutorial();
+        }
+        else
+        {
+            ResumeGameFromTutorialPause();
+        }
+    }
+
+    private void PauseGameForTutorial()
+    {
+        if (tutorialPausedGame)
+            return;
+
+        tutorialPreviousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+        tutorialPausedGame = true;
+    }
+
+    private void ResumeGameFromTutorialPause()
+    {
+        if (!tutorialPausedGame)
+            return;
+
+        Time.timeScale = tutorialPreviousTimeScale;
+        tutorialPausedGame = false;
     }
 }

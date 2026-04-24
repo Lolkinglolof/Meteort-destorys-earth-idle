@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
@@ -6,7 +5,7 @@ using System.Linq;
 
 public class SnapBackgroundsTool
 {
-    [MenuItem("Tools/Backgrounds/Snap Selected Together %#g")]
+    [MenuItem("Tools/Snap Selected Backgrounds Together %#g")]
     private static void SnapSelectedBackgroundsTogether()
     {
         GameObject[] selected = Selection.gameObjects;
@@ -34,6 +33,7 @@ public class SnapBackgroundsTool
         List<GameObject> unplaced = new List<GameObject>(backgrounds);
         unplaced.Remove(anchor);
 
+        // NYT: En mikroskopisk overlapning for at forhindre "Seams" (flickering linjer)
         float overlapAmount = 0.02f;
 
         while (unplaced.Count > 0)
@@ -45,12 +45,10 @@ public class SnapBackgroundsTool
             foreach (var u in unplaced)
             {
                 Bounds bU = GetWorldBounds(u);
-
                 foreach (var p in placed)
                 {
                     Bounds bP = GetWorldBounds(p);
                     float dist = Vector3.Distance(bU.center, bP.center);
-
                     if (dist < minDistance)
                     {
                         minDistance = dist;
@@ -65,26 +63,26 @@ public class SnapBackgroundsTool
             Vector3 diff = uBounds.center - pBounds.center;
 
             Vector3 pos = bestUnplaced.transform.position;
-            float shiftX = 0f;
-            float shiftY = 0f;
+            float shiftX = 0;
+            float shiftY = 0;
 
             if (Mathf.Abs(diff.x) > Mathf.Abs(diff.y))
             {
-                // Horizontal snap
+                // -- HORISONTALT SNAP (Højre / Venstre) --
                 if (diff.x > 0)
-                    shiftX = pBounds.max.x - uBounds.min.x - overlapAmount;
+                    shiftX = pBounds.max.x - uBounds.min.x - overlapAmount; // Træk lidt til venstre
                 else
-                    shiftX = pBounds.min.x - uBounds.max.x + overlapAmount;
+                    shiftX = pBounds.min.x - uBounds.max.x + overlapAmount; // Træk lidt til højre
 
                 shiftY = pBounds.min.y - uBounds.min.y;
             }
             else
             {
-                // Vertical snap
+                // -- VERTIKALT SNAP (Oppe / Nede) --
                 if (diff.y > 0)
-                    shiftY = pBounds.max.y - uBounds.min.y - overlapAmount;
+                    shiftY = pBounds.max.y - uBounds.min.y - overlapAmount; // Træk lidt ned
                 else
-                    shiftY = pBounds.min.y - uBounds.max.y + overlapAmount;
+                    shiftY = pBounds.min.y - uBounds.max.y + overlapAmount; // Træk lidt op
 
                 shiftX = pBounds.min.x - uBounds.min.x;
             }
@@ -103,10 +101,7 @@ public class SnapBackgroundsTool
     private static Bounds GetWorldBounds(GameObject go)
     {
         Renderer rend = go.GetComponentInChildren<Renderer>();
-        if (rend != null)
-            return rend.bounds;
-
+        if (rend != null) return rend.bounds;
         return new Bounds(go.transform.position, Vector3.zero);
     }
 }
-#endif

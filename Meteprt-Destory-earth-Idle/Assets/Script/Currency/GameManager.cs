@@ -94,12 +94,12 @@ public class GameManager : MonoBehaviour
     void UpdateUI()
     {
         if (coinText != null)
-            coinText.text = "Coins: " + System.Math.Floor(coins).ToString("N0");
+            coinText.text = ": " +System.Math.Floor(coins).ToString("N0") + "$";
 
         if (diamondText != null)
-            diamondText.text = "Dia: " + diamonds.ToString();
+            diamondText.text = ": " + diamonds.ToString();
 
         if (distanceText != null)
-            distanceText.text = "Distance: " + Mathf.Floor(distanceTraveled).ToString() + "m";
+            distanceText.text = ": " + Mathf.Floor(distanceTraveled).ToString() + "m";
     }
 }
