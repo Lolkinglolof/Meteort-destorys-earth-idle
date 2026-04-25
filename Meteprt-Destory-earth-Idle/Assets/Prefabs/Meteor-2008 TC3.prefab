@@ -144,8 +144,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSpeed: 6
   acceleration: 0.65
+  hitCoinReward: 50
   maxHealth: 100
-  coinReward: 600
+  coinReward: 1000
   diamondReward: 1
   massFactor: 30
   destructionParticles: {fileID: 8177209327860406344, guid: 31368fc866b9ceb4f82fba0c99c47535, type: 3}

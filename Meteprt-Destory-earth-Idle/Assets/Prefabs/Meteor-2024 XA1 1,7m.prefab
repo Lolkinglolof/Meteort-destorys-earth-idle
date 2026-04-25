@@ -144,6 +144,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSpeed: 5
   acceleration: 0.6
+  hitCoinReward: 50
+  hitRewardCooldown: 0.15
   maxHealth: 90
   coinReward: 100
   diamondReward: 0

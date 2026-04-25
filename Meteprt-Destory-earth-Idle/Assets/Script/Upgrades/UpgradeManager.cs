@@ -12,7 +12,8 @@ public class UpgradeManager : MonoBehaviour
     public int massLevel = 1;
     public int enduranceLevel = 1;
     public int healthLevel = 1;    
-    public int autoPilotLevel = 0; 
+    public int autoPilotLevel = 0;
+    public int incomeLevel = 1;
 
     [Header("Settings: Speed")]
     public float baseMaxSpeed = 5f;
@@ -44,6 +45,13 @@ public class UpgradeManager : MonoBehaviour
     public float autoPilotTimeIncrease = 2.5f; 
     public float baseAutoPilotCoinCost = 650f;
     public float autoPilotCoinCostIncrease = 935f;
+
+    [Header("Settings: Income")]
+    public float baseIncomeCost = 1000f;
+    public float incomeCostIncreasePerLevel = 500f;
+
+    [Tooltip("Ekstra procent per income level. 0.001 betyder 0.001%. 1 betyder 1%.")]
+    public float incomePercentIncreasePerLevel = 0.95f;
 
     [Header("UI References: Speed")]
     public TextMeshProUGUI speedStatsText;
@@ -81,17 +89,39 @@ public class UpgradeManager : MonoBehaviour
     public TextMeshProUGUI autoPilotLevelText;
     public Button autoPilotUpgradeButton;
 
+    [Header("UI References: Income")]
+    public TextMeshProUGUI incomeStatsText;
+    public TextMeshProUGUI incomeCostText;
+    public TextMeshProUGUI incomeLevelText;
+    public Button incomeUpgradeButton;
+
     [Header("Live Gameplay UI")]
     public TextMeshProUGUI liveMassDisplay;
 
+    [Header("DEV ONLY - Difficulty Debug")]
+    [SerializeField] private int debugTotalUpgradeLevel;
+    [SerializeField] private int debugEnemyDifficultyTier;
+    [SerializeField] private int debugUpgradesUntilNextTier;
+
+    [Header("Difficulty Settings")]
+    [SerializeField] private int upgradesPerEnemyTier = 20;
     void Awake()
     {
-        if (Instance == null) Instance = this;
+        if (Instance == null)
+            Instance = this;
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         LoadUpgrades();
+        UpdateDifficultyDebugInspector();
     }
 
     void Start()
     {
+        UpdateDifficultyDebugInspector();
         UpdateUI();
         UpdatePlayerStats();
     }
@@ -104,7 +134,8 @@ public class UpgradeManager : MonoBehaviour
         PlayerPrefs.SetInt("MassLevel", massLevel);
         PlayerPrefs.SetInt("EnduranceLevel", enduranceLevel);
         PlayerPrefs.SetInt("HealthLevel", healthLevel);       
-        PlayerPrefs.SetInt("AutoPilotLevel", autoPilotLevel); 
+        PlayerPrefs.SetInt("AutoPilotLevel", autoPilotLevel);
+        PlayerPrefs.SetInt("IncomeLevel", incomeLevel);
         PlayerPrefs.Save();
     }
 
@@ -116,8 +147,39 @@ public class UpgradeManager : MonoBehaviour
         enduranceLevel = PlayerPrefs.GetInt("EnduranceLevel", 1);
         healthLevel = PlayerPrefs.GetInt("HealthLevel", 1);
         autoPilotLevel = PlayerPrefs.GetInt("AutoPilotLevel", 0);
+        incomeLevel = PlayerPrefs.GetInt("IncomeLevel", 1);
+    }
+    public void UpgradeIncome()
+    {
+        if (GameManager.instance.SpendCoins(GetIncomeUpgradeCost()))
+        {
+            incomeLevel++;
+            SaveUpgrades();
+            UpdatePlayerStats();
+            UpdateUI();
+
+            TutorialManager.Instance?.ReportUpgradeBought();
+        }
+    }
+    public float GetIncomeUpgradeCost()
+    {
+        return baseIncomeCost + (incomeLevel - 1) * incomeCostIncreasePerLevel;
     }
 
+    public float GetCurrentIncomeBonusPercent()
+    {
+        return (incomeLevel - 1) * incomePercentIncreasePerLevel;
+    }
+
+    public float GetNextIncomeBonusPercent()
+    {
+        return incomeLevel * incomePercentIncreasePerLevel;
+    }
+
+    public float GetCurrentIncomeMultiplier()
+    {
+        return 1f + (GetCurrentIncomeBonusPercent() / 100f);
+    }
     // --- KØBS-FUNKTIONER ---
     public void UpgradeSpeed()
     {
@@ -270,6 +332,7 @@ public class UpgradeManager : MonoBehaviour
     }
     void Update()
     {
+        UpdateDifficultyDebugInspector();
         if (GameManager.instance != null)
         {
             if (speedUpgradeButton != null) speedUpgradeButton.interactable = (GameManager.instance.coins >= GetSpeedUpgradeCost());
@@ -289,6 +352,9 @@ public class UpgradeManager : MonoBehaviour
             if (autoPilotUpgradeButton != null)
                 autoPilotUpgradeButton.interactable = (GameManager.instance.coins >= GetAutoPilotCoinCost() && GameManager.instance.diamonds >= GetAutoPilotDiamondCost());
 
+            if (incomeUpgradeButton != null)
+                incomeUpgradeButton.interactable = (GameManager.instance.coins >= GetIncomeUpgradeCost());
+
             if (liveMassDisplay != null)
             {
                 MeteorController player = Object.FindFirstObjectByType<MeteorController>();
@@ -303,6 +369,7 @@ public class UpgradeManager : MonoBehaviour
 
     public void UpdateUI()
     {
+
         // Speed
         if (speedStatsText != null) speedStatsText.text = "Speed: " + GetCurrentMaxSpeed().ToString("F1") + " -> " + GetNextMaxSpeed().ToString("F1");
         if (speedCostText != null) speedCostText.text = "Price: " + GetSpeedUpgradeCost().ToString("F0");
@@ -359,6 +426,19 @@ public class UpgradeManager : MonoBehaviour
         }
         if (autoPilotLevelText != null)
             autoPilotLevelText.text = "Lvl: " + autoPilotLevel;
+
+        // Income
+        if (incomeStatsText != null)
+        {
+            incomeStatsText.text =
+                "Income: +" + GetCurrentIncomeBonusPercent().ToString("0.##") + "% " +
+                "-> +" + GetNextIncomeBonusPercent().ToString("0.##") + "%";
+        }
+        if (incomeCostText != null)
+            incomeCostText.text = "Price: " + GetIncomeUpgradeCost().ToString("F0");
+
+        if (incomeLevelText != null)
+            incomeLevelText.text = "Lvl: " + incomeLevel;
     }
 
     void UpdatePlayerStats()
@@ -384,5 +464,41 @@ public class UpgradeManager : MonoBehaviour
 
             player.RefreshMeteorScale();
         }
+    }
+    public int GetTotalUpgradesBought()
+    {
+        int total = 0;
+
+        total += Mathf.Max(0, speedLevel - 1);
+        total += Mathf.Max(0, accelLevel - 1);
+        total += Mathf.Max(0, massLevel - 1);
+        total += Mathf.Max(0, enduranceLevel - 1);
+        total += Mathf.Max(0, healthLevel - 1);
+        total += Mathf.Max(0, incomeLevel - 1);
+        // AutoPilot starter på 0, så den tælles direkte
+        total += Mathf.Max(0, autoPilotLevel);
+
+        return total;
+    }
+
+    public int GetEnemyDifficultyTier()
+    {
+        // 0 = normal enemies
+        // 1 = efter 70 upgrades
+        // 2 = efter 140 upgrades
+        // 3 = efter 210 upgrades osv.
+        return GetTotalUpgradesBought() / upgradesPerEnemyTier;
+    }
+
+    private void UpdateDifficultyDebugInspector()
+    {
+        debugTotalUpgradeLevel = GetTotalUpgradesBought();
+        debugEnemyDifficultyTier = GetEnemyDifficultyTier();
+
+        int progressInCurrentTier = debugTotalUpgradeLevel % upgradesPerEnemyTier;
+        debugUpgradesUntilNextTier = upgradesPerEnemyTier - progressInCurrentTier;
+
+        if (progressInCurrentTier == 0 && debugTotalUpgradeLevel > 0)
+            debugUpgradesUntilNextTier = upgradesPerEnemyTier;
     }
 }

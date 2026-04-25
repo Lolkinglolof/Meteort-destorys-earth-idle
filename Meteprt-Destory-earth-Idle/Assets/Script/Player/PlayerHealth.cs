@@ -21,7 +21,11 @@ public class PlayerHealth : MonoBehaviour
     public GameObject debrisPrefab;
 
     [Header("Game Over UI")]
-    public GameObject gameOverPanel; // Træk dit Game Over UI Panel herind fra Inspectoren!
+    public GameObject gameOverPanel;
+
+    [Header("Extra Objects To Destroy On Death")]
+    [Tooltip("Drag extra player parts here, for example the separate player sprite object.")]
+    public GameObject[] extraObjectsToDestroyOnDeath;
 
     private Vector3 originalScale;
 
@@ -47,7 +51,8 @@ public class PlayerHealth : MonoBehaviour
             damageVignette.color = c;
         }
 
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
     }
 
     void Update()
@@ -90,7 +95,8 @@ public class PlayerHealth : MonoBehaviour
             damageVignette.color = c;
         }
 
-        if (currentHealth <= 0) GameOver();
+        if (currentHealth <= 0)
+            GameOver();
     }
 
     void SpawnDebris(int amount)
@@ -99,14 +105,24 @@ public class PlayerHealth : MonoBehaviour
         {
             for (int i = 0; i < amount; i++)
             {
-                GameObject piece = Instantiate(debrisPrefab, transform.position, Quaternion.Euler(0, 0, Random.Range(0, 360)));
+                GameObject piece = Instantiate(
+                    debrisPrefab,
+                    transform.position,
+                    Quaternion.Euler(0, 0, Random.Range(0, 360))
+                );
 
                 Rigidbody2D rb = piece.GetComponent<Rigidbody2D>();
+
                 if (rb != null)
                 {
-                    Vector2 randomDir = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+                    Vector2 randomDir = new Vector2(
+                        Random.Range(-1f, 1f),
+                        Random.Range(-1f, 1f)
+                    ).normalized;
+
                     rb.AddForce(randomDir * 4f, ForceMode2D.Impulse);
                 }
+
                 Destroy(piece, 3f);
             }
         }
@@ -114,8 +130,11 @@ public class PlayerHealth : MonoBehaviour
 
     void UpdateHealthBar()
     {
-        if (healthBarFill != null) healthBarFill.fillAmount = currentHealth / maxHealth;
-        if (healthText != null) healthText.text = Mathf.Ceil(currentHealth) + " / " + maxHealth;
+        if (healthBarFill != null)
+            healthBarFill.fillAmount = currentHealth / maxHealth;
+
+        if (healthText != null)
+            healthText.text = Mathf.Ceil(currentHealth) + " / " + maxHealth;
     }
 
     void UpdateMeteorVisuals()
@@ -132,33 +151,60 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("<color=red>SPILLEREN ER DØD - STARTER SLOW MOTION!</color>");
 
         Time.timeScale = 0.3f;
-        Time.fixedDeltaTime = 0.02f * Time.timeScale; // Gør fysikken smooth i slowmotion
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
 
         MeshRenderer mesh = GetComponent<MeshRenderer>();
-        if (mesh != null) mesh.enabled = false;
+        if (mesh != null)
+            mesh.enabled = false;
 
         SpriteRenderer sprite = GetComponent<SpriteRenderer>();
-        if (sprite != null) sprite.enabled = false;
+        if (sprite != null)
+            sprite.enabled = false;
+
+        // Sletter ekstra player dele, fx separat sprite object
+        DestroyExtraObjectsOnDeath();
 
         SpawnDebris(20);
 
         Collider2D coll = GetComponent<Collider2D>();
-        if (coll != null) coll.enabled = false;
+        if (coll != null)
+            coll.enabled = false;
 
         MeteorController controller = GetComponent<MeteorController>();
-        if (controller != null) controller.enabled = false;
+        if (controller != null)
+            controller.enabled = false;
 
         AutoPilot pilot = GetComponent<AutoPilot>();
-        if (pilot != null) pilot.enabled = false;
+        if (pilot != null)
+            pilot.enabled = false;
 
         StartCoroutine(GameOverRoutine());
+    }
+
+    void DestroyExtraObjectsOnDeath()
+    {
+        if (extraObjectsToDestroyOnDeath == null)
+            return;
+
+        for (int i = 0; i < extraObjectsToDestroyOnDeath.Length; i++)
+        {
+            GameObject obj = extraObjectsToDestroyOnDeath[i];
+
+            if (obj == null)
+                continue;
+
+            // Sikkerhed: undgå at slette dette main player object ved fejl
+            if (obj == gameObject)
+                continue;
+
+            Destroy(obj);
+        }
     }
 
     IEnumerator GameOverRoutine()
     {
         yield return new WaitForSecondsRealtime(2.5f);
 
-        // Tænd for Game Over menuen 
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
@@ -171,7 +217,6 @@ public class PlayerHealth : MonoBehaviour
 
     public void RestartGame()
     {
-        // Nulstil tiden INDEN vi loader banen igen!
         Time.timeScale = 1f;
         Time.fixedDeltaTime = 0.02f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -179,7 +224,6 @@ public class PlayerHealth : MonoBehaviour
 
     public void GoToMainMenu()
     {
-        // Nulstil tiden INDEN vi går til menuen!
         Time.timeScale = 1f;
         Time.fixedDeltaTime = 0.02f;
         SceneManager.LoadScene("MainMenu");
