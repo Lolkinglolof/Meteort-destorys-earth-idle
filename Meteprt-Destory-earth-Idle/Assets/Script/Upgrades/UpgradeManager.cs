@@ -11,9 +11,10 @@ public class UpgradeManager : MonoBehaviour
     public int accelLevel = 1;
     public int massLevel = 1;
     public int enduranceLevel = 1;
-    public int healthLevel = 1;    
+    public int healthLevel = 1;
     public int autoPilotLevel = 0;
     public int incomeLevel = 1;
+    public int atmosphereShieldLevel = 0;
 
     [Header("Settings: Speed")]
     public float baseMaxSpeed = 5f;
@@ -49,9 +50,28 @@ public class UpgradeManager : MonoBehaviour
     [Header("Settings: Income")]
     public float baseIncomeCost = 1000f;
     public float incomeCostIncreasePerLevel = 500f;
-
     [Tooltip("Ekstra procent per income level. 0.001 betyder 0.001%. 1 betyder 1%.")]
     public float incomePercentIncreasePerLevel = 0.95f;
+
+    [Header("Settings: Atmosphere Shield")]
+    public float baseAtmosphereShieldCost = 25000f;
+    public float atmosphereShieldCostIncreasePerLevel = 15000f;
+
+    public float baseAtmosphereShieldRadius = 3f;
+    public float atmosphereShieldRadiusIncreasePerLevel = 0.35f;
+
+    public float baseAtmosphereShieldDamagePerSecond = 5f;
+    public float atmosphereShieldDamageIncreasePerLevel = 2f;
+
+    public float atmosphereShieldTickInterval = 0.25f;
+
+    [Header("UI References: Atmosphere Shield")]
+    public TextMeshProUGUI atmosphereShieldStatsText;
+    public TextMeshProUGUI atmosphereShieldCostText;
+    public TextMeshProUGUI atmosphereShieldLevelText;
+    public Button atmosphereShieldUpgradeButton;
+
+ 
 
     [Header("UI References: Speed")]
     public TextMeshProUGUI speedStatsText;
@@ -136,6 +156,7 @@ public class UpgradeManager : MonoBehaviour
         PlayerPrefs.SetInt("HealthLevel", healthLevel);       
         PlayerPrefs.SetInt("AutoPilotLevel", autoPilotLevel);
         PlayerPrefs.SetInt("IncomeLevel", incomeLevel);
+        PlayerPrefs.SetInt("AtmosphereShieldLevel", atmosphereShieldLevel);
         PlayerPrefs.Save();
     }
 
@@ -148,6 +169,7 @@ public class UpgradeManager : MonoBehaviour
         healthLevel = PlayerPrefs.GetInt("HealthLevel", 1);
         autoPilotLevel = PlayerPrefs.GetInt("AutoPilotLevel", 0);
         incomeLevel = PlayerPrefs.GetInt("IncomeLevel", 1);
+        atmosphereShieldLevel = PlayerPrefs.GetInt("AtmosphereShieldLevel", 0);
     }
     public void UpgradeIncome()
     {
@@ -181,6 +203,59 @@ public class UpgradeManager : MonoBehaviour
         return 1f + (GetCurrentIncomeBonusPercent() / 100f);
     }
     // --- KØBS-FUNKTIONER ---
+    public void UpgradeAtmosphereShield()
+    {
+        if (GameManager.instance.SpendCoins(GetAtmosphereShieldUpgradeCost()))
+        {
+            atmosphereShieldLevel++;
+
+            SaveUpgrades();
+            UpdatePlayerStats();
+            UpdateUI();
+
+            TutorialManager.Instance?.ReportUpgradeBought();
+        }
+    }
+    public bool GetAtmosphereShieldUnlocked()
+    {
+        return atmosphereShieldLevel > 0;
+    }
+
+    public float GetAtmosphereShieldUpgradeCost()
+    {
+        return baseAtmosphereShieldCost + atmosphereShieldLevel * atmosphereShieldCostIncreasePerLevel;
+    }
+
+    public float GetCurrentAtmosphereShieldRadius()
+    {
+        if (atmosphereShieldLevel <= 0)
+            return 0f;
+
+        return baseAtmosphereShieldRadius + (atmosphereShieldLevel - 1) * atmosphereShieldRadiusIncreasePerLevel;
+    }
+
+    public float GetNextAtmosphereShieldRadius()
+    {
+        return baseAtmosphereShieldRadius + atmosphereShieldLevel * atmosphereShieldRadiusIncreasePerLevel;
+    }
+
+    public float GetCurrentAtmosphereShieldDamage()
+    {
+        if (atmosphereShieldLevel <= 0)
+            return 0f;
+
+        return baseAtmosphereShieldDamagePerSecond + (atmosphereShieldLevel - 1) * atmosphereShieldDamageIncreasePerLevel;
+    }
+
+    public float GetNextAtmosphereShieldDamage()
+    {
+        return baseAtmosphereShieldDamagePerSecond + atmosphereShieldLevel * atmosphereShieldDamageIncreasePerLevel;
+    }
+
+    public float GetCurrentAtmosphereShieldTickInterval()
+    {
+        return atmosphereShieldTickInterval;
+    }
     public void UpgradeSpeed()
     {
         if (GameManager.instance.SpendCoins(GetSpeedUpgradeCost()))
@@ -348,6 +423,9 @@ public class UpgradeManager : MonoBehaviour
             if (healthUpgradeButton != null)
                 healthUpgradeButton.interactable = (GameManager.instance.coins >= GetHealthUpgradeCost());
 
+            if (atmosphereShieldUpgradeButton != null)
+                atmosphereShieldUpgradeButton.interactable = (GameManager.instance.coins >= GetAtmosphereShieldUpgradeCost());
+
             // Auto-Pilot knap (mønter og diamanter)
             if (autoPilotUpgradeButton != null)
                 autoPilotUpgradeButton.interactable = (GameManager.instance.coins >= GetAutoPilotCoinCost() && GameManager.instance.diamonds >= GetAutoPilotDiamondCost());
@@ -439,6 +517,31 @@ public class UpgradeManager : MonoBehaviour
 
         if (incomeLevelText != null)
             incomeLevelText.text = "Lvl: " + incomeLevel;
+        if (atmosphereShieldStatsText != null)
+        {
+            if (atmosphereShieldLevel <= 0)
+            {
+                atmosphereShieldStatsText.text =
+                    "Atmosphere Shield: LOCKED -> " +
+                    "Radius " + GetNextAtmosphereShieldRadius().ToString("F1") +
+                    " / DPS " + GetNextAtmosphereShieldDamage().ToString("F1");
+            }
+            else
+            {
+                atmosphereShieldStatsText.text =
+                    "Atmosphere Shield: " +
+                    "Radius " + GetCurrentAtmosphereShieldRadius().ToString("F1") +
+                    " -> " + GetNextAtmosphereShieldRadius().ToString("F1") +
+                    " / DPS " + GetCurrentAtmosphereShieldDamage().ToString("F1") +
+                    " -> " + GetNextAtmosphereShieldDamage().ToString("F1");
+            }
+        }
+
+        if (atmosphereShieldCostText != null)
+            atmosphereShieldCostText.text = "Price: " + GetAtmosphereShieldUpgradeCost().ToString("F0");
+
+        if (atmosphereShieldLevelText != null)
+            atmosphereShieldLevelText.text = "Lvl: " + atmosphereShieldLevel;
     }
 
     void UpdatePlayerStats()
@@ -461,6 +564,21 @@ public class UpgradeManager : MonoBehaviour
             {
                 healthScript.UpgradeMaxHealth(GetCurrentMaxHealth());
             }
+            AtmosphereShieldWeapon shield = player.GetComponent<AtmosphereShieldWeapon>();
+
+            if (shield != null)
+            {
+                shield.SetShieldUnlocked(GetAtmosphereShieldUnlocked());
+
+                if (GetAtmosphereShieldUnlocked())
+                {
+                    shield.SetShieldStats(
+                        GetCurrentAtmosphereShieldRadius(),
+                        GetCurrentAtmosphereShieldDamage(),
+                        GetCurrentAtmosphereShieldTickInterval()
+                    );
+                }
+            }
 
             player.RefreshMeteorScale();
         }
@@ -475,6 +593,10 @@ public class UpgradeManager : MonoBehaviour
         total += Mathf.Max(0, enduranceLevel - 1);
         total += Mathf.Max(0, healthLevel - 1);
         total += Mathf.Max(0, incomeLevel - 1);
+        total += Mathf.Max(0, atmosphereShieldLevel);
+
+        // AutoPilot starter på 0, så den tælles direkte
+        total += Mathf.Max(0, autoPilotLevel);
         // AutoPilot starter på 0, så den tælles direkte
         total += Mathf.Max(0, autoPilotLevel);
 
