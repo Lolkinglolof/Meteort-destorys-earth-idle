@@ -208,7 +208,7 @@ public class Meteor2022WJ1 : MonoBehaviour
 
             if (playerHP != null && damageToPlayer > 0.1f)
             {
-                playerHP.TakeDamage(damageToPlayer);
+                playerHP.TakeMeteorDamage(damageToPlayer, gameObject.tag);
                 lastHitTime = Time.time;
             }
         }

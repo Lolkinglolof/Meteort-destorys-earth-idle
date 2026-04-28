@@ -98,7 +98,30 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0)
             GameOver();
     }
+    public void TakeMeteorDamage(float amount, string meteorTag)
+    {
+        float finalDamage = amount;
 
+        if (UpgradeManager.Instance != null)
+        {
+            // Default defence virker KUN mod normale meteorer.
+            if (meteorTag == "SmallDebris")
+            {
+                finalDamage *= UpgradeManager.Instance.GetDefaultMeteorDefenceDamageMultiplier();
+            }
+
+            // Rare defence virker KUN mod sjældne meteorer.
+            // Den virker IKKE mod SmallDebris eller Enemy.
+            else if (meteorTag == "RareMeteor")
+            {
+                finalDamage *= UpgradeManager.Instance.GetRareMeteorDefenceDamageMultiplier();
+            }
+
+            // Enemy skal IKKE påvirkes af meteor defence.
+        }
+
+        TakeDamage(finalDamage);
+    }
     void SpawnDebris(int amount)
     {
         if (debrisPrefab != null)
@@ -171,6 +194,15 @@ public class PlayerHealth : MonoBehaviour
             coll.enabled = false;
 
         MeteorController controller = GetComponent<MeteorController>();
+
+        bool autoPilotWasActive =
+            controller != null &&
+            controller.isAutoPiloting;
+
+        bool autoRetryUnlocked =
+            UpgradeManager.Instance != null &&
+            UpgradeManager.Instance.GetAutoRetryUnlocked();
+
         if (controller != null)
             controller.enabled = false;
 
@@ -178,7 +210,14 @@ public class PlayerHealth : MonoBehaviour
         if (pilot != null)
             pilot.enabled = false;
 
-        StartCoroutine(GameOverRoutine());
+        if (autoRetryUnlocked && autoPilotWasActive)
+        {
+            StartCoroutine(AutoRetryRoutine());
+        }
+        else
+        {
+            StartCoroutine(GameOverRoutine());
+        }
     }
 
     void DestroyExtraObjectsOnDeath()
@@ -215,13 +254,22 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    IEnumerator AutoRetryRoutine()
+    {
+        yield return new WaitForSecondsRealtime(1.2f);
+
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     public void RestartGame()
     {
         Time.timeScale = 1f;
         Time.fixedDeltaTime = 0.02f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-
     public void GoToMainMenu()
     {
         Time.timeScale = 1f;
