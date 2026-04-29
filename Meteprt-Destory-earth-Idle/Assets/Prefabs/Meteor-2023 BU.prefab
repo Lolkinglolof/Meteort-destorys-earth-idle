@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 4744241604554192181}
   - component: {fileID: 5589282294982048704}
   m_Layer: 0
-  m_Name: Meteor-2008 TC3
+  m_Name: Meteor-2023 BU
   m_TagString: RareMeteor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -3, y: -0.9, z: 0}
-  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_LocalScale: {x: 6, y: 6, z: 6}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3015158800073823989}
@@ -142,13 +142,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3db454a2222320a44a4d84f9cefe3294, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSpeed: 6
-  acceleration: 0.65
+  maxSpeed: 9
+  acceleration: 0.75
   hitCoinReward: 50
-  maxHealth: 100
-  coinReward: 1000
-  diamondReward: 1
-  massFactor: 30
+  maxHealth: 200
+  coinReward: 3600
+  diamondReward: 2
+  massFactor: 75
   destructionParticles: {fileID: 8177209327860406344, guid: 31368fc866b9ceb4f82fba0c99c47535, type: 3}
   offScreenLifetime: 15
 --- !u!50 &960988317815577957
@@ -206,8 +206,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 818874ff70d8d4e42ab36935ea48afaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  asteroidName: 2008 TC3
-  asteroidSize: 'Size: 4m'
+  asteroidName: 2023 BU
+  asteroidSize: 'Size: 6m'
   infoCanvas: {fileID: 4259401247019665878}
   nameText: {fileID: 2918430776825581050}
   sizeText: {fileID: 8324078274347674776}

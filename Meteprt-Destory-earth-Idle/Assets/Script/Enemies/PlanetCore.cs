@@ -1,81 +1,163 @@
 using UnityEngine;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class PlanetCore : MonoBehaviour
 {
     [Header("Planet Indstillinger")]
-    // Sæt denne højt! Spilleren SKAL opgradere for at kunne ødelægge den.
     public float maxPlanetHealth = 2000f;
     private float currentPlanetHealth;
 
-    [Header("Visuals & Belønning")]
-    public GameObject giantExplosionPrefab; // Her kan du trække en KÆMPE pixel-eksplosion ind!
+    [Header("Visuals")]
+    public GameObject giantExplosionPrefab;
+
+    [Header("Win UI")]
+    [Tooltip("Drag your You Win panel here from the Canvas.")]
+    public GameObject winPanel;
+
+    [Tooltip("How long after Earth is destroyed before the win menu appears.")]
+    public float winMenuDelay = 2.5f;
+
+    [Header("Win Slow Motion")]
+    public float winSlowMotionScale = 0.25f;
+
+    private bool hasWon = false;
 
     void Start()
     {
         currentPlanetHealth = maxPlanetHealth;
+
+        if (winPanel != null)
+            winPanel.SetActive(false);
     }
 
-    // Dette sker, når meteoren (spilleren) smadrer ind i Jordens overflade
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (hasWon)
+            return;
+
         if (collision.gameObject.CompareTag("Player"))
         {
             PlayerHealth playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
 
             if (playerHealth != null && playerHealth.currentHealth > 0)
             {
-                // Spillerens tilbageværende liv fungerer som deres "Impact Force" (kollisionskraft)
                 float impactForce = playerHealth.currentHealth;
 
-                // Giv skade til planeten
                 currentPlanetHealth -= impactForce;
-                Debug.Log("<color=orange>Meteoren ramte Jorden med " + impactForce + " kraft! Jordens HP er nu: " + currentPlanetHealth + "</color>");
+
+                Debug.Log(
+                    "<color=orange>Meteoren ramte Jorden med " +
+                    impactForce +
+                    " kraft! Jordens HP er nu: " +
+                    currentPlanetHealth +
+                    "</color>"
+                );
 
                 if (currentPlanetHealth <= 0)
                 {
-                    // ==========================================
-                    // SUCCESS! SPILLEREN VAR STOR NOK!
-                    // ==========================================
-                    DestroyPlanet();
-
-                    // Sørg for at spilleren overlever visuelt, eller gør noget fedt her
+                    DestroyPlanet(collision.gameObject);
                 }
                 else
                 {
-                    // ==========================================
-                    // FEJLSLÅET! SPILLEREN VAR FOR LILLE!
-                    // ==========================================
                     Debug.Log("<color=red>Meteoren var for lille og blev knust mod Jordens overflade!</color>");
 
-                    // Dræb spilleren øjeblikkeligt (ved at give dem mere skade end de har liv)
-                    // Dette udløser automatisk din fede Slow-Motion Game Over, vi lavede tidligere!
                     playerHealth.TakeDamage(999999f);
                 }
             }
         }
     }
 
-    void DestroyPlanet()
+    void DestroyPlanet(GameObject playerObject)
     {
-        Debug.Log("<color=green>KABOOM! JORDEN ER UDSLETTET!</color>");
+        if (hasWon)
+            return;
 
-        // 1. Spil en gigantisk eksplosion lige på Jordens position
+        hasWon = true;
+
+        Debug.Log("<color=green>KABOOM! JORDEN ER UDSLETTET! DU VANDT!</color>");
+
         if (giantExplosionPrefab != null)
         {
             Instantiate(giantExplosionPrefab, transform.position, Quaternion.identity);
         }
 
-        // 2. Skjul Jorden, så det ligner den er sprunget i luften
         SpriteRenderer sprite = GetComponent<SpriteRenderer>();
-        if (sprite != null) sprite.enabled = false;
+        if (sprite != null)
+            sprite.enabled = false;
 
         MeshRenderer mesh = GetComponent<MeshRenderer>();
-        if (mesh != null) mesh.enabled = false;
+        if (mesh != null)
+            mesh.enabled = false;
 
         Collider2D coll = GetComponent<Collider2D>();
-        if (coll != null) coll.enabled = false;
+        if (coll != null)
+            coll.enabled = false;
 
-        // 3. Her kan vi senere aktivere en "DU VANDT!" skærm i stedet for Game Over.
-        // For nu lader vi bare spilleren svæve over resterne af planeten og nyde sejren!
+        DisablePlayerAfterWin(playerObject);
+
+        StartCoroutine(WinRoutine());
+    }
+
+    void DisablePlayerAfterWin(GameObject playerObject)
+    {
+        if (playerObject == null)
+            return;
+
+        MeteorController controller = playerObject.GetComponent<MeteorController>();
+        if (controller != null)
+            controller.enabled = false;
+
+        AutoPilot pilot = playerObject.GetComponent<AutoPilot>();
+        if (pilot != null)
+            pilot.enabled = false;
+
+        PlayerSkade playerDamage = playerObject.GetComponent<PlayerSkade>();
+        if (playerDamage != null)
+            playerDamage.enabled = false;
+
+        AtmosphereShieldWeapon shield = playerObject.GetComponent<AtmosphereShieldWeapon>();
+        if (shield != null)
+            shield.enabled = false;
+
+        Collider2D playerCollider = playerObject.GetComponent<Collider2D>();
+        if (playerCollider != null)
+            playerCollider.enabled = false;
+    }
+
+    IEnumerator WinRoutine()
+    {
+        Time.timeScale = winSlowMotionScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+
+        yield return new WaitForSecondsRealtime(winMenuDelay);
+
+        Time.timeScale = 0f;
+        Time.fixedDeltaTime = 0.02f;
+
+        if (winPanel != null)
+        {
+            winPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("WinPanel is not assigned on PlanetCore.");
+        }
+    }
+
+    public void RestartGame()
+    {
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void GoToMainMenu()
+    {
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
+        SceneManager.LoadScene("MainMenu");
     }
 }
